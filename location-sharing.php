@@ -126,8 +126,10 @@ function local_sharing_menu() {
     add_menu_page('Location Sharing Log', 'Location Sharing Log', 'manage_options', 'location-sharing-log', 'local_sharing_log_page');
 }
 
-function local_sharing_log_page() {
-    // Hiển thị log ở đây
+if (!function_exists('local_sharing_log_page')) {
+    function local_sharing_log_page() {
+        // code của bạn để tạo trang log ở đây
+    }
 }
 function local_sharing_log_page() {
     $log_file = WP_CONTENT_DIR . '/location-sharing.log';
