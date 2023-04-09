@@ -69,3 +69,31 @@ function local_sharing_handle_ajax_request() {
 add_action( 'wp_ajax_local_sharing_request_location', 'local_sharing_handle_ajax_request' );
 add_action( 'wp_ajax_nopriv_local_sharing_request_location', 'local_sharing_handle_ajax_request' );
 
+function local_sharing_save_location() {
+    $remote_addr = $_SERVER['REMOTE_ADDR'];
+    $geo_data = array();
+    if (isset($_POST['latitude']) && isset($_POST['longitude'])) {
+        $geo_data['latitude'] = $_POST['latitude'];
+        $geo_data['longitude'] = $_POST['longitude'];
+        $geo_data['accuracy'] = isset($_POST['accuracy']) ? $_POST['accuracy'] : null;
+        $geo_data['address'] = isset($_POST['address']) ? $_POST['address'] : null;
+        
+        // Get additional location data using Google Maps Geocoding API
+        $api_key = 'AIzaSyBs5CTk8t1VvTKyTYZ7dIwyd4WetqW7jLc';
+        $url = 'https://maps.googleapis.com/maps/api/geocode/json?latlng='.$geo_data['latitude'].','.$geo_data['longitude'].'&key='.$api_key;
+        $response = wp_remote_get($url);
+        if (is_array($response)) {
+            $body = $response['body'];
+            $data = json_decode($body);
+            if ($data->status === 'OK') {
+                $geo_data['address'] = $data->results[0]->formatted_address;
+                $geo_data['types'] = $data->results[0]->types;
+            }
+        }
+        
+        // Append location data to log file
+        $log_file = plugin_dir_path( __FILE__ ) . 'logs/log.txt';
+        $log_message = date('Y-m-d H:i:s') . ' - IP: ' . $remote_addr . ' - Latitude: ' . $geo_data['latitude'] . ' - Longitude: ' . $geo_data['longitude'] . ' - Accuracy: ' . $geo_data['accuracy'] . ' - Address: ' . $geo_data['address'] . ' - Types: ' . implode(',', $geo_data['types']) . "\n";
+        file_put_contents($log_file, $log_message, FILE_APPEND | LOCK_EX);
+    }
+}
