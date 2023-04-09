@@ -119,3 +119,41 @@ function lsp_write_to_log($message) {
     $log = date('Y-m-d H:i:s') . " [$ip] [$location] $message\n";
     file_put_contents($log_file, $log, FILE_APPEND);
 }
+
+add_action('admin_menu', 'local_sharing_menu');
+
+function local_sharing_menu() {
+    add_menu_page('Location Sharing Log', 'Location Sharing Log', 'manage_options', 'location-sharing-log', 'local_sharing_log_page');
+}
+
+function local_sharing_log_page() {
+    // Hiển thị log ở đây
+}
+function local_sharing_log_page() {
+    $log_file = WP_CONTENT_DIR . '/location-sharing.log';
+    $log_content = file_get_contents($log_file);
+    $log_lines = explode("\n", $log_content);
+
+    echo '<div class="wrap">';
+    echo '<h1>Location Sharing Log</h1>';
+
+    echo '<table class="widefat">';
+    echo '<thead><tr><th>Time</th><th>IP Address</th><th>Latitude</th><th>Longitude</th><th>Address</th></tr></thead>';
+    echo '<tbody>';
+    foreach ($log_lines as $log_line) {
+        $log_data = json_decode($log_line, true);
+        if ($log_data) {
+            echo '<tr>';
+            echo '<td>' . date('Y-m-d H:i:s', $log_data['time']) . '</td>';
+            echo '<td>' . $log_data['ip'] . '</td>';
+            echo '<td>' . $log_data['lat'] . '</td>';
+            echo '<td>' . $log_data['lng'] . '</td>';
+            echo '<td>' . $log_data['address'] . '</td>';
+            echo '</tr>';
+        }
+    }
+    echo '</tbody>';
+    echo '</table>';
+
+    echo '</div>';
+}
