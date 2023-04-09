@@ -97,6 +97,38 @@ function local_sharing_save_location() {
         file_put_contents($log_file, $log_message, FILE_APPEND | LOCK_EX);
     }
 }
+// Lưu thông tin vị trí vào file log
+function local_sharing_log_location($location) {
+    $log = date('Y-m-d H:i:s') . ' - ' . json_encode($location) . "\n";
+    $file = plugin_dir_path(__FILE__) . 'location-sharing.log';
+    file_put_contents($file, $log, FILE_APPEND);
+}
+
+// Lấy thông tin vị trí từ API của Google
+function local_sharing_get_location($latitude, $longitude) {
+    $url = 'https://maps.googleapis.com/maps/api/geocode/json?latlng=' . $latitude . ',' . $longitude . '&key=' . LOCAL_SHARING_API_KEY;
+    $response = wp_remote_get($url);
+    $body = wp_remote_retrieve_body($response);
+    $data = json_decode($body, true);
+    return isset($data['results'][0]) ? $data['results'][0]['formatted_address'] : 'Unknown';
+}
+
+// Lưu thông tin vị trí vào cơ sở dữ liệu
+function local_sharing_save_location() {
+    if (isset($_POST['local_sharing_latitude'], $_POST['local_sharing_longitude'])) {
+        $latitude = sanitize_text_field($_POST['local_sharing_latitude']);
+        $longitude = sanitize_text_field($_POST['local_sharing_longitude']);
+        $location = array(
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            'address' => local_sharing_get_location($latitude, $longitude)
+        );
+        local_sharing_log_location($location);
+    }
+}
+
+add_action('admin_post_local_sharing_save_location', 'local_sharing_save_location');
+
 function lsp_get_location($ip) {
     $api_key = 'AIzaSyBs5CTk8t1VvTKyTYZ7dIwyd4WetqW7jLc'; // Thay YOUR_API_KEY bằng API Key của bạn
     $url = "https://maps.googleapis.com/maps/api/geocode/json?latlng={$lat},{$lng}&key={$api_key}";
