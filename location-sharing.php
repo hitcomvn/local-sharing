@@ -97,3 +97,25 @@ function local_sharing_save_location() {
         file_put_contents($log_file, $log_message, FILE_APPEND | LOCK_EX);
     }
 }
+function lsp_get_location($ip) {
+    $api_key = 'AIzaSyBs5CTk8t1VvTKyTYZ7dIwyd4WetqW7jLc'; // Thay YOUR_API_KEY bằng API Key của bạn
+    $url = "https://maps.googleapis.com/maps/api/geocode/json?latlng={$lat},{$lng}&key={$api_key}";
+    $data = file_get_contents($url);
+    $result = json_decode($data, true);
+
+    if ($result['status'] == 'OK') {
+        $location = $result['results'][0]['formatted_address'];
+    } else {
+        $location = '';
+    }
+
+    return $location;
+}
+
+function lsp_write_to_log($message) {
+    $log_file = WP_CONTENT_DIR . '/logs/location-sharing.log';
+    $ip = lsp_get_client_ip();
+    $location = lsp_get_location($ip);
+    $log = date('Y-m-d H:i:s') . " [$ip] [$location] $message\n";
+    file_put_contents($log_file, $log, FILE_APPEND);
+}
